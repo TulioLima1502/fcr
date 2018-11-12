@@ -13,7 +13,7 @@ import sensor_msgs.msg
 from PIL import Image
 import numpy as np
 
-from multiprocessing import Process
+import threading
 
 class pioneer():
     def __init__(self, debug=False ,ser= None):
@@ -145,7 +145,7 @@ class pioneer():
 
         moving = True
         while moving:
-            p = Process(target=self.MontaMapa())
+            p=threading.Thread(target = self.MontaMapa())
             p.start()
             velocity_movimentacao.publish(vel_movimentacao)
             distancia_atual_percorrida = math.sqrt( math.pow(( self.pose.position.x - posicao_atual_x ) , 2 ) + math.pow(( self.pose.position.y - posicao_atual_y ) , 2 ) )
@@ -154,15 +154,17 @@ class pioneer():
 
             if (distancia_total - distancia_atual_percorrida)<0:
                 moving = False
-            
+            p.join()
+
         vel_movimentacao.linear.x = 0
         velocity_movimentacao.publish(vel_movimentacao)
+        
 
     def Reorientar(self,posicao_start_x,posicao_start_y):
         lista_range = self.ranges
         for item in lista_range:
             if(float(item) - 0.5 < 0):
-                print(item)
+                #print(item)
                 if (lista_range[75] > lista_range[185]): 
                     self.Move_direita()
                 elif (lista_range[75] < lista_range[185]): 
@@ -564,7 +566,7 @@ class pioneer():
 
     def MontaMapa(self):
         
-            if self.mapa_now == None:
+            if self.mapa_now is None:
                 matriz = np.zeros((512, 512))
                 matriz.fill(int(128))
             else:
@@ -661,7 +663,7 @@ class pioneer():
         distanciax = posicaoFinalX - self.pose.position.x
         distanciay = posicaoFinalY - self.pose.position.y
         angulo = posicaoFinalTeta - teta
-        print(distanciax,distanciay,angulo)
+        #print(distanciax,distanciay,angulo)
 
         self.destino_x = posicaoFinalX
         self.destino_y = posicaoFinalY
